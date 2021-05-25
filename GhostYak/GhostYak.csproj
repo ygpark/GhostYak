@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IO\CommandLine\Options.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\BLOCK_PREFETCH.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION_UNION.cs" />
