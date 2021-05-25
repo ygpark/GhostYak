@@ -20,13 +20,19 @@ namespace GhostYak.IO
             try
             {
                 ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_DiskDrive");
-                foreach (ManagementObject queryObj in searcher.Get().Cast<ManagementObject>().OrderBy(obj => obj["DeviceID"]))
+                
+                var mmObjectList = from item in searcher.Get().Cast<ManagementObject>() 
+                                    orderby item["DeviceID"] 
+                                    select item;
+
+                foreach (ManagementObject mmObject in mmObjectList)
                 {
-                    drivelist.Add(queryObj["DeviceID"].ToString());
+                    drivelist.Add(mmObject["DeviceID"].ToString());
                 }
             }
-            catch (ManagementException)
+            catch (ManagementException ex)
             {
+                Console.WriteLine(ex.ToString());
                 return null;
             }
             return drivelist;
