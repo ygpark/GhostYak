@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using GhostYak.IO.DeviceIOControl.Wrapper;
 using System.ComponentModel;
-using GhostYak.IO.DeviceIOControl.Objects.Disk;
 using System.Management;
 using System.IO;
+using System.Diagnostics;
+using GhostYak.IO.DeviceIOControl.Wrapper;
+using GhostYak.IO.DeviceIOControl.Objects.Disk;
 using Microsoft.Win32.SafeHandles;
+
 
 namespace GhostYak.IO.RawDiskDrive
 {
@@ -96,7 +98,7 @@ namespace GhostYak.IO.RawDiskDrive
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e.ToString());
+                        Debug.WriteLine(e.ToString());
                     }
 
                     try
@@ -105,7 +107,7 @@ namespace GhostYak.IO.RawDiskDrive
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(e.ToString());
+                        Debug.WriteLine(e.ToString());
                     }
                 }
             }

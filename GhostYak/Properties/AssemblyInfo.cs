@@ -31,6 +31,10 @@ using System.Runtime.InteropServices;
 //
 // 모든 값을 지정하거나 아래와 같이 '*'를 사용하여 빌드 번호 및 수정 번호를
 // 기본값으로 할 수 있습니다.
-// [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
+//[assembly: AssemblyVersion("1.0.*")]
+//
+// 프로젝트를 언로드한 후 Deterministic를 false로 변경한다.
+// 변경전 : <Deterministic>true</Deterministic>
+// 변경후 : <Deterministic>false</Deterministic>
+[assembly: AssemblyVersion("1.1.*")]
 [assembly: AssemblyFileVersion("1.0.0.0")]

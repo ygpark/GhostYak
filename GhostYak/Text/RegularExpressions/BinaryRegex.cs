@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+using Re2.Net;
 using System.IO;
 
 namespace GhostYak.Text.RegularExpressions
@@ -16,25 +16,22 @@ namespace GhostYak.Text.RegularExpressions
 
         public BinaryRegex(string pattern)
         {
-            _regex = new Regex(pattern, RegexOptions.Multiline);
+            _regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.Latin1);
         }
 
         public Match Match(byte[] input)
         {
-            string sInput = Encoding.GetEncoding("latin1").GetString(input);
-            return _regex.Match(sInput);
+            return _regex.Match(input);
         }
 
         public Match Match(byte[] input, int startat)
         {
-            string sInput = Encoding.GetEncoding("latin1").GetString(input);
-            return _regex.Match(sInput, startat);
+            return _regex.Match(input, startat);
         }
 
         public Match Match(byte[] input, int beginning, int length)
         {
-            string sInput = Encoding.GetEncoding("latin1").GetString(input);
-            return _regex.Match(sInput, beginning, length);
+            return _regex.Match(input, beginning, length);
         }
 
         //------------------------------------------------------------------
@@ -43,16 +40,14 @@ namespace GhostYak.Text.RegularExpressions
 
         public MatchCollection Matches(byte[] input)
         {
-            string sInput = Encoding.GetEncoding("latin1").GetString(input);
-            return _regex.Matches(sInput);
+            return _regex.Matches(input);
         }
 
 
 
         public MatchCollection Matches(byte[] input, int startat)
         {
-            string sInput = Encoding.GetEncoding("latin1").GetString(input);
-            return _regex.Matches(sInput, startat);
+            return _regex.Matches(input, startat);
         }
 
 
@@ -62,16 +57,14 @@ namespace GhostYak.Text.RegularExpressions
 
         public static Match Match(byte[] input, string pattern)
         {
-            string sInput = Encoding.GetEncoding("latin1").GetString(input);
-            return Regex.Match(sInput, pattern, RegexOptions.Multiline);
+            return Regex.Match(input, pattern, RegexOptions.Multiline | RegexOptions.Latin1);
         }
 
 
 
         public static MatchCollection Matches(byte[] input, string pattern)
         {
-            string sInput = Encoding.GetEncoding("latin1").GetString(input);
-            return Regex.Matches(sInput, pattern, RegexOptions.Multiline);
+            return Regex.Matches(input, pattern, RegexOptions.Multiline | RegexOptions.Latin1);
         }
 
 
