@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace GhostyYak.IO.RawDiskDrive
+namespace GhostYak.IO.RawDiskDrive
 {
     /// <summary>
     /// TODO : IDispose 구현해야함.

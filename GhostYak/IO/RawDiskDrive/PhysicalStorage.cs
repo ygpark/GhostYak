@@ -9,7 +9,7 @@ using System.Management;
 using System.IO;
 using Microsoft.Win32.SafeHandles;
 
-namespace GhostyYak.IO.RawDiskDrive
+namespace GhostYak.IO.RawDiskDrive
 {
     public class PhysicalStorage : StorageBase
     {

@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Management;
 
-namespace GhostyYak.IO.RawDiskDrive
+namespace GhostYak.IO.RawDiskDrive
 {
     public class LogicalStorage :StorageBase
     {

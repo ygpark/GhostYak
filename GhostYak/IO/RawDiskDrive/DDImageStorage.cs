@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace GhostyYak.IO.RawDiskDrive
+namespace GhostYak.IO.RawDiskDrive
 {
     /// <summary>
     /// 경고

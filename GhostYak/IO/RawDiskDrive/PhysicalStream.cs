@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GhostyYak.IO.RawDiskDrive
+namespace GhostYak.IO.RawDiskDrive
 {
     class PhysicalStream : BaseStream
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace GhostyYak.IO.RawDiskDrive
+namespace GhostYak.IO.RawDiskDrive
 {
     public class BaseStream : System.IO.Stream
     {

@@ -6,7 +6,7 @@ using Microsoft.Win32.SafeHandles;
 using GhostYak.IO.DeviceIOControl.Objects.Disk;
 using GhostYak.IO.DeviceIOControl.Objects.Enums;
 
-namespace GhostyYak.IO.RawDiskDrive
+namespace GhostYak.IO.RawDiskDrive
 {
     public static class NativeMethods
     {
