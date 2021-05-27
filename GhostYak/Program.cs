@@ -13,6 +13,7 @@ namespace GhostYak
     {
         static void Main(string[] args)
         {
+
             List<string> list = PhysicalDiskInfo.GetNames();
             foreach(var item in list)
             {

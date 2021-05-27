@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31313.79
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GhostYak", "ghostyak\GhostYak.csproj", "{A8C681E6-316A-45FB-8D32-1EF47B693C17}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GhostyakTest", "BinaryRegexTest\GhostyakTest.csproj", "{BBC69A46-2C9D-4DE1-9105-0B1D11E2043F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GhostyakTest", "GhostyakTest\GhostyakTest.csproj", "{BBC69A46-2C9D-4DE1-9105-0B1D11E2043F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

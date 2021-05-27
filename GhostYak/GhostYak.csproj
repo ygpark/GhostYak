@@ -139,6 +139,17 @@
     <Compile Include="IO\DeviceIOControl\Wrapper\VolumeDeviceWrapper.cs" />
     <Compile Include="IO\Kernel32.cs" />
     <Compile Include="IO\PhysicalDiskInfo.cs" />
+    <Compile Include="IO\RawDiskDrive\BaseStream.cs" />
+    <Compile Include="IO\RawDiskDrive\DDImageStorage.cs" />
+    <Compile Include="IO\RawDiskDrive\FileStreamEx.cs" />
+    <Compile Include="IO\RawDiskDrive\LogicalStorage.cs" />
+    <Compile Include="IO\RawDiskDrive\NativeMethods.cs" />
+    <Compile Include="IO\RawDiskDrive\NormalFileStreamEx.cs" />
+    <Compile Include="IO\RawDiskDrive\PhysicalStorage.cs" />
+    <Compile Include="IO\RawDiskDrive\PhysicalStream.cs" />
+    <Compile Include="IO\RawDiskDrive\StorageBase.cs" />
+    <Compile Include="IO\RawDiskDrive\StreamEx.cs" />
+    <Compile Include="IO\RawDiskDrive\Win32Native.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Text\RegularExpressions\BinaryRegex.cs" />

@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using Ghostyak.Text.RegularExpressions;
-
+using GhostYak.Text.RegularExpressions;
+      
 namespace BinaryRegexTest
 {
     [TestClass]
