@@ -1,0 +1,52 @@
+https://github.com/libyal/libewf
+https://github.com/libyal/libewf/wiki
+https://github.com/libyal/libewf/wiki/Building
+
+
+
+
+# MSYS로 컴파일 하는 방법
+
+# MSYS 설치
+
+cd C:\mingw\bin\
+mingw-get install binutils mingw-runtime w32api libgmp libmpc libiconv pthreads gettext libz gcc-core mingw32-make msys
+C:\MinGW\msys\1.0\msys.bat
+
+
+mkdir /mingw              # 이부분은 이미 되어있음.. git 에서 한 것 같음
+mount C:\\MinGW /mingw    #
+
+
+# 컴파일
+
+tar xfv libewf-experimental-<version>.tar.gz
+
+cd libewf-<version>/   								# 여기에 bzip2, dokan, zlib을 다운받고 폴더명을 정정한다.
+													# libewf-<version>/bzip2
+													# libewf-<version>/dokan
+													# libewf-<version>/zlib
+git clone git://sourceware.org/git/bzip2.git
+git clone https://github.com/joachimmetz/dokan
+https://zlib.net/zlib1211.zip 을 zlib 폴더에 압축푼다.
+
+
+
+## Mingw로 컴파일
+CPPFLAGS=-DWINVER=0x0501 ./configure --prefix=/mingw
+make
+
+## visual studio 2019로 컴파일. (ewf.net을 사용하려면 이걸로 해야한다.)
+  1. 먼저, C++/CLI가 기본 설치되지 않기 때문에 설치한다.
+  2. msvscpp 폴더에 들어가서 솔루션을 연다.
+(*)11. 닷넷용 enum이 필요해서 내가 추가했다. ewf.net_handle.h를 추가해서 다시 빌드하자.
+  3. dokan..은 필요없다. 언로드한다.
+  4. ewf_test***...도 필요없다. 언로드 한다.
+  5. ewf***...도 필요없다. 언로드 한다.
+  6. pyewf도 필요없다.  언로드 한다.
+  7. bzip이 dll로 되어있다. lib로 변경한다.
+  8. 컴파일한다.
+  9. x64로 플랫폼을 변경해서 하나 더 빌드한다.
+  10. Release폴더와 x64/Release폴더에 dll이 생겼다. 복사해서 사용하면 된다.
+ 
+

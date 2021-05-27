@@ -26,7 +26,7 @@ namespace GhostyYak.IO.RawDiskDrive
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            int br = 0;
+            int br;
             if (offset == 0)
             {
                 br = _handle.ReadBuffer(buffer, count);
