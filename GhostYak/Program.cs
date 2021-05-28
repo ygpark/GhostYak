@@ -34,13 +34,6 @@ namespace GhostYak
             Debug.Listeners.Add(new TextWriterTraceListener(Console.Out));
             Debug.AutoFlush = true;
 
-            if (!IsAdministrator())
-            {
-                Console.WriteLine("관리자 권한이 필요합니다. 터미널을 관리자권한으로 실행하세요.");
-                return;
-            }
-
-
             long fileSize = 0;
             Stream stream;
 
@@ -76,6 +69,12 @@ namespace GhostYak
 
             if (0 < _list) 
             {
+                if (!IsAdministrator())
+                {
+                    Console.WriteLine("관리자 권한이 필요합니다. 터미널을 관리자권한으로 실행하세요.");
+                    return;
+                }
+
                 List<string> physicalDiskNames = PhysicalDiskInfo.GetNames();
                 foreach (var item in physicalDiskNames)
                 {
@@ -107,6 +106,13 @@ namespace GhostYak
             if (_fileName != string.Empty) {
                 
                 if(Original.Regex.IsMatch(_fileName, @"\\\\.\\PHYSICALDRIVE[0-9]+")) {
+
+                    if (!IsAdministrator())
+                    {
+                        Console.WriteLine("관리자 권한이 필요합니다. 터미널을 관리자권한으로 실행하세요.");
+                        return;
+                    }
+
                     PhysicalStorage ps = new PhysicalStorage(_fileName);
                     stream = ps.OpenRead();
                     fileSize = ps.Size;
@@ -268,7 +274,7 @@ namespace GhostYak
 
         private static void ShowVersion()
         {
-            Console.WriteLine($"{Version.AssemblyTitle} v{Version.AssemblyVersionBig2}");
+            Console.WriteLine($"{Version.AssemblyTitle} v{Version.AssemblyVersionBig2} (BUILD {Version.AssemblyBuildDate})");
         }
 
         private static void Trace(string txt)
