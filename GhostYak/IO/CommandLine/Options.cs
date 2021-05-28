@@ -49,13 +49,17 @@ namespace GhostYak.IO.CommandLine.Options
         private string _description = string.Empty;
         private Action<string> _action;
         private int _actionCount;
+        private bool _isValueType = false;
+        private string _prototype;
 
 
 
         public string[] Keys { get { return _keys; } set { _keys = value; } }
         
         public string Description { get { return _description; } set { _description = value; } }
-        
+
+        public string Prototype { get { return _prototype; } }
+
         public Action<string> Action 
         {
             get {
@@ -69,6 +73,8 @@ namespace GhostYak.IO.CommandLine.Options
         /// Action 호출 횟수를 리턴합니다.
         /// </summary>
         public int ActionCount { get { return _actionCount; } }
+        
+        public bool IsValueType { get { return _isValueType; } }
 
 
 
@@ -78,7 +84,7 @@ namespace GhostYak.IO.CommandLine.Options
             {
                 throw new Exception("Action<string> is null.");
             }
-
+            _prototype = prototype;
             this.Keys = ParsePrototype(prototype);
             this.Description = description;
             this.Action = action;
@@ -89,7 +95,15 @@ namespace GhostYak.IO.CommandLine.Options
             string[] items = prototype.Split('|');
             for (int i = 0; i < items.Length; i++)
             {
-                items[i] = items[i].Trim();
+                if (items[i].Contains("="))
+                {
+                    _isValueType = true;
+                    items[i] = items[i].Replace("=", "").Trim();
+                } else {
+                    items[i] = items[i].Trim();
+                }
+
+                items[i] = items[i].Replace("=", "").Trim();
             }
             return items;
         }
@@ -146,7 +160,7 @@ namespace GhostYak.IO.CommandLine.Options
                     string value = GetValue(arg);
 
                     OptionItem item = FindOptionItemByKey(key);
-                    if(item.ActionCount == 0)// 사용자 실수로 명령줄 인수가 -h -help 이런식으로 중복해서 생긴 경우 한번만 실행
+                    if(item != null && item.ActionCount == 0)// 사용자 실수로 명령줄 인수가 -h -help 이런식으로 중복해서 생긴 경우 한번만 실행
                     {
                         item.Action(value);
                     }
@@ -230,28 +244,58 @@ namespace GhostYak.IO.CommandLine.Options
 
             StringBuilder sb = new StringBuilder();
 
-            int maxKeyCount = -1;
-            for (int i = 0; i < OptionItems.Count;  i++)
-                if(maxKeyCount < OptionItems[i].Keys.Length)
-                    maxKeyCount = OptionItems[i].Keys.Length;
-
-
+            // 아래쪽 for문을 미리 돌려보면서 옵션부분의 문자열 최대 길이를 찾는다.
+            // 아래쪽 for문이 변경되면 여기도 바꿔야 한다.
+            int max = 0;
             for (int i = 0; i < OptionItems.Count; i++)
             {
-                sb.Append("  ");
+                string head = "";
                 for (int j = 0; j < OptionItems[i].Keys.Length; j++)
                 {
                     string key = OptionItems[i].Keys[j];
                     string pre = key.Length == 1 ? "-" : "--";
-                    sb.Append(pre);
-                    sb.Append(key);
-                    if(j < OptionItems[i].Keys.Length -1)
-                        sb.Append(", ");
+                    head += pre;
+                    head += key;
+                    if (OptionItems[i].IsValueType)
+                        head += "=VALUE";
+                    if (j < OptionItems[i].Keys.Length - 1)
+                        head += ", ";
                 }
-                for (int j = 0; j < maxKeyCount; j++)
+                if (max < head.Length)
+                    max = head.Length;
+
+            }
+
+            for (int i = 0; i < OptionItems.Count; i++)
+            {
+                sb.Append("\t");
+                int head = 0;
+                for (int j = 0; j < OptionItems[i].Keys.Length; j++)
                 {
-                    sb.Append("\t");
+                    string key = OptionItems[i].Keys[j];
+                    string pre = key.Length == 1 ? "-" : "--";
+                    sb.Append(pre); 
+                    sb.Append(key);
+                    head += pre.Length + key.Length;
+                    if (OptionItems[i].IsValueType)
+                    {
+                        sb.Append("=VALUE");
+                        head += "=VALUE".Length;
+
+                    }
+                    if (j < OptionItems[i].Keys.Length -1)
+                    {
+                        sb.Append(", ");
+                        head += ", ".Length;
+                    }
                 }
+
+                for (int k = 0; k < max - head; k++)
+                {
+                    sb.Append(" ");
+                }
+
+                sb.Append("\t");
 
                 sb.Append(OptionItems[i].Description);
 
