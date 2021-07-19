@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Re2.Net;
 using System.IO;
+using System.Diagnostics;
 
 namespace GhostYak.Text.RegularExpressions
 {
@@ -67,7 +68,51 @@ namespace GhostYak.Text.RegularExpressions
             return Regex.Matches(input, pattern, RegexOptions.Multiline | RegexOptions.Latin1);
         }
 
+        public static void Test()
+        {
+            TestRegexMatchesByInstance();
+            TestRegexMatchesByStatic();
+            TestRegexMatchByInstance();
+            TestRegexMatchByStatic();
+        }
 
+        private static void TestRegexMatchesByInstance()
+        {
+            byte[] _source = _source = new byte[512];
+            for (int i = 0; i < _source.Length; i++)
+                _source[i] = (byte)i;
+            BinaryRegex br = new BinaryRegex("\x00[\x00-\xFF]{254}\xFF");
+            var matchs = br.Matches(_source);
+            Debug.Assert(2 == matchs.Count);
+        }
+
+        private static void TestRegexMatchesByStatic()
+        {
+            byte[] _source = _source = new byte[512];
+            for (int i = 0; i < _source.Length; i++)
+                _source[i] = (byte)i;
+            var matchs = BinaryRegex.Matches(_source, "\x00[\x00-\xFF]{254}\xFF");
+            Debug.Assert(2 == matchs.Count);
+        }
+
+        private static void TestRegexMatchByInstance()
+        {
+            byte[] _source = _source = new byte[512];
+            for (int i = 0; i < _source.Length; i++)
+                _source[i] = (byte)i;
+            BinaryRegex br = new BinaryRegex("\x10[\x00-\xFF]{16}\x21");
+            var match = br.Match(_source);
+            Debug.Assert(16 == match.Index);
+        }
+
+        private static void TestRegexMatchByStatic()
+        {
+            byte[] _source = _source = new byte[512];
+            for (int i = 0; i < _source.Length; i++)
+                _source[i] = (byte)i;
+            var match = BinaryRegex.Match(_source, "\x10[\x00-\xFF]{16}\x21");
+            Debug.Assert(16 == match.Index);
+        }
 
     }
 }

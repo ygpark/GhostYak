@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace GhostYak
 {
-    class Version
+    public class Version
     {
         private Version()
         {
