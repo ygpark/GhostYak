@@ -40,7 +40,7 @@ using System.Threading.Tasks;
 /// <summary>
 /// 
 /// </summary>
-namespace GhostYak.IO.CommandLine.Options
+namespace GhostYak.CommandLine.Options
 {
     
     internal class OptionItem

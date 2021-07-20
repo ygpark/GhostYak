@@ -2,7 +2,7 @@
 // bingrep v1.2
 //
 using GhostYak.IO;
-using GhostYak.IO.CommandLine.Options;
+using GhostYak.CommandLine.Options;
 using GhostYak.IO.RawDiskDrive;
 using GhostYak.Text.RegularExpressions;
 using System;

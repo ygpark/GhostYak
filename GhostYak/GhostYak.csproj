@@ -114,10 +114,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandLine\Options.cs" />
     <Compile Include="ConsoleApp\BinGrep.cs" />
     <Compile Include="DateTime\UnixTime64.cs" />
     <Compile Include="DateTime\UnixTime.cs" />
-    <Compile Include="IO\CommandLine\Options.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\BLOCK_PREFETCH.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION_UNION.cs" />
@@ -226,6 +226,7 @@
     <Compile Include="RunTime\InteropServices\MarshalHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Text\Base64.cs" />
     <Compile Include="Text\HexConverter.cs" />
     <Compile Include="Text\RegularExpressions\BinaryRegex.cs" />
     <Compile Include="Version.cs" />

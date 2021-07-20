@@ -13,11 +13,6 @@ using GhostYak.Text.RegularExpressions;
 
 namespace GhostYak
 {
-    class TClass
-    {
-        public int value;
-    }
-
     class Program
     {
         static void Main(string[] args)
