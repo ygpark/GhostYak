@@ -20,7 +20,7 @@ namespace GhostYak.IO.RawDiskDrive
 
         public PhysicalStream(string path)
         {
-            _handle = Win32Native.CreateFile(path, FileAccess.Read, FileShare.Read, IntPtr.Zero, FileMode.Open, FileAttributes.Normal, IntPtr.Zero);
+            _handle = Win32Native.CreateFile(path, FileAccess.Read, FileShare.ReadWrite, IntPtr.Zero, FileMode.Open, FileAttributes.Normal, IntPtr.Zero);
 
             using (DiskDeviceWrapper diskIo = new DiskDeviceWrapper(_handle, false))
             {
