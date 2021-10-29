@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{A8C681E6-316A-45FB-8D32-1EF47B693C17}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>GhostYak</RootNamespace>
     <AssemblyName>GhostYak</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
@@ -93,7 +93,8 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>GhostYak.Program</StartupObject>
+    <StartupObject>
+    </StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ewf.net, Version=1.0.7137.483, Culture=neutral, processorArchitecture=x86">
@@ -106,6 +107,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -118,6 +120,7 @@
     <Compile Include="ConsoleApp\BinGrep.cs" />
     <Compile Include="DateTime\UnixTime64.cs" />
     <Compile Include="DateTime\UnixTime.cs" />
+    <Compile Include="Form\SubFormHelper.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\BLOCK_PREFETCH.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION_UNION.cs" />

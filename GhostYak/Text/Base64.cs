@@ -12,12 +12,25 @@ namespace GhostYak.Text
         {
             try
             {
-                byte[] byte64 = Convert.FromBase64String(data.Trim());
+                byte[] byte64 = Convert.FromBase64String(data);
                 return Encoding.UTF8.GetString(byte64);
             }
             catch (Exception e)
             {
                 throw new Exception("Error in Base64Decode: " + e.Message);
+            }
+        }
+
+        public static string EnCode(string data)
+        {
+            try
+            {
+                byte[] byteString = Encoding.UTF8.GetBytes(data);
+                return Convert.ToBase64String(byteString);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Error in Base64Encode: " + e.Message);
             }
         }
     }
