@@ -48,7 +48,7 @@ namespace GhostYak.IO.RawDiskDrive
                 throw new ArgumentException("path는 빈 문자열입니다.");
             }
             
-            _handle = Win32Native.CreateFile(path, FileAccess.Read, FileShare.Read, IntPtr.Zero, FileMode.Open, FileAttributes.Normal, IntPtr.Zero);
+            _handle = Win32Native.CreateFile(path, FileAccess.Read, FileShare.ReadWrite, IntPtr.Zero, FileMode.Open, FileAttributes.Normal, IntPtr.Zero);
             _pos = 0L;
             _bufferSize = bufferSize;
             _readPos = 0;

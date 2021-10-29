@@ -80,7 +80,7 @@ namespace GhostYak.IO.RawDiskDrive
                 }
             }
 
-            SafeFileHandle handle = Win32Native.CreateFile(Path, FileAccess.ReadWrite, FileShare.ReadWrite, IntPtr.Zero, FileMode.Open, FileAttributes.Normal, IntPtr.Zero);
+            SafeFileHandle handle = Win32Native.CreateFile(Path, FileAccess.Read, FileShare.ReadWrite, IntPtr.Zero, FileMode.Open, FileAttributes.Normal, IntPtr.Zero);
             if (handle.IsInvalid)
             {
                 throw new Win32Exception(Marshal.GetLastWin32Error());
