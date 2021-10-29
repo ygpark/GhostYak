@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{A8C681E6-316A-45FB-8D32-1EF47B693C17}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>GhostYak</RootNamespace>
     <AssemblyName>GhostYak</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
@@ -119,7 +119,7 @@
     <Compile Include="CommandLine\Options.cs" />
     <Compile Include="ConsoleApp\BinGrep.cs" />
     <Compile Include="DateTime\UnixTime64.cs" />
-    <Compile Include="DateTime\UnixTime.cs" />
+    <Compile Include="DateTime\UnixTime32.cs" />
     <Compile Include="Form\SubFormHelper.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\BLOCK_PREFETCH.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION.cs" />

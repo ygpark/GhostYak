@@ -8,11 +8,11 @@ using System.Diagnostics;
 
 namespace GhostYak.DateTime
 {
-    public class UnixTime64
+    public class UnixTime32
     {
-        private long _seconds;
+        private int _seconds;
 
-        public UnixTime64(long seconds)
+        public UnixTime32(int seconds)
         {
             _seconds = seconds;
         }
@@ -22,8 +22,8 @@ namespace GhostYak.DateTime
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <param name="seconds"></param>
-        public UnixTime64(byte[] seconds) : this(seconds, false)
-        {
+        public UnixTime32(byte[] seconds) : this(seconds, false)
+        { 
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace GhostYak.DateTime
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <param name="seconds"></param>
         /// <param name="isLittleEndian"></param>
-        public UnixTime64(byte[] seconds, bool isBigEndian)
+        public UnixTime32(byte[] seconds, bool isBigEndian)
         {
             byte[] secondsClone = seconds.ToArray();
             int len = BitConverter.GetBytes(_seconds).Length;
@@ -65,7 +65,7 @@ namespace GhostYak.DateTime
         /// 1970-01-01T00:00:00Z 이후 경과된 시간(초)을 반환합니다.
         /// </summary>
         /// <returns></returns>
-        public long ToUnixTimeSeconds()
+        public int ToUnixTimeSeconds()
         {
             return _seconds;
         }
@@ -93,22 +93,22 @@ namespace GhostYak.DateTime
         public static void Test()
         {
             var dotnetDateTime = new System.DateTime(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            long dotnetUnixTime = (long)((DateTimeOffset)dotnetDateTime).ToUnixTimeSeconds();
+            int dotnetUnixTime = (int)((DateTimeOffset)dotnetDateTime).ToUnixTimeSeconds();
 
-            var myUnixTime1 = new UnixTime64(dotnetUnixTime);
+            var myUnixTime1 = new UnixTime32(dotnetUnixTime);
             var myDateTime1 = myUnixTime1.ToDateTime();
 
             byte[] arr2 = BitConverter.GetBytes(dotnetUnixTime);
-            var myUnixTime2 = new UnixTime64(arr2);
+            var myUnixTime2 = new UnixTime32(arr2);
             var myDateTime2 = myUnixTime2.ToDateTime();
 
             byte[] arr3 = BitConverter.GetBytes(dotnetUnixTime);
-            var myUnixTime3 = new UnixTime64(arr3, false);
+            var myUnixTime3 = new UnixTime32(arr3, false);
             var myDateTime3 = myUnixTime3.ToDateTime();
 
             byte[] arr4Reverse = BitConverter.GetBytes(dotnetUnixTime);
             Array.Reverse(arr4Reverse);
-            var myUnixTime4 = new UnixTime64(arr4Reverse, true);
+            var myUnixTime4 = new UnixTime32(arr4Reverse, true);
             var myDateTime4 = myUnixTime4.ToDateTime();
 
             Debug.Assert(dotnetDateTime == myDateTime1);
