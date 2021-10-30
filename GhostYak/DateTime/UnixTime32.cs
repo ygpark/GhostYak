@@ -10,9 +10,9 @@ namespace GhostYak.DateTime
 {
     public class UnixTime32
     {
-        private int _seconds;
+        private uint _seconds;
 
-        public UnixTime32(int seconds)
+        public UnixTime32(uint seconds)
         {
             _seconds = seconds;
         }
@@ -42,7 +42,7 @@ namespace GhostYak.DateTime
             if (isBigEndian)
                 Array.Reverse(secondsClone);
 
-            _seconds = BitConverter.ToInt32(secondsClone, 0);
+            _seconds = BitConverter.ToUInt32(secondsClone, 0);
         }
 
         public System.DateTime ToDateTime()
@@ -65,7 +65,7 @@ namespace GhostYak.DateTime
         /// 1970-01-01T00:00:00Z 이후 경과된 시간(초)을 반환합니다.
         /// </summary>
         /// <returns></returns>
-        public int ToUnixTimeSeconds()
+        public uint ToUnixTimeSeconds()
         {
             return _seconds;
         }
@@ -93,7 +93,7 @@ namespace GhostYak.DateTime
         public static void Test()
         {
             var dotnetDateTime = new System.DateTime(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            int dotnetUnixTime = (int)((DateTimeOffset)dotnetDateTime).ToUnixTimeSeconds();
+            uint dotnetUnixTime = (uint)((DateTimeOffset)dotnetDateTime).ToUnixTimeSeconds();
 
             var myUnixTime1 = new UnixTime32(dotnetUnixTime);
             var myDateTime1 = myUnixTime1.ToDateTime();
