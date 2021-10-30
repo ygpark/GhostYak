@@ -12,13 +12,36 @@ namespace GhostYak.DateTime
     {
         private long _seconds;
 
-        public UnixTime64(long seconds)
+
+        #region CTor
+
+        public UnixTime64()
         {
-            _seconds = seconds;
+            // Marshal.PtrToStructure 때문에 반드시 필요하다.
         }
 
+
+        public UnixTime64(long seconds) : this(seconds, false)
+        {
+        }
+
+        public UnixTime64(long seconds, bool isBigEndian)
+        {
+            if (isBigEndian)
+            {
+                byte[] bSeconds = BitConverter.GetBytes(seconds);
+                Array.Reverse(bSeconds);
+                _seconds = BitConverter.ToInt64(bSeconds, 0);
+            }
+            else
+            {
+                _seconds = seconds;
+            }
+        }
+
+
         /// <summary>
-        /// 리틀앤디언 
+        /// 
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <param name="seconds"></param>
@@ -26,12 +49,13 @@ namespace GhostYak.DateTime
         {
         }
 
+
         /// <summary>
         /// 
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <param name="seconds"></param>
-        /// <param name="isLittleEndian"></param>
+        /// <param name="isBigEndian"></param>
         public UnixTime64(byte[] seconds, bool isBigEndian)
         {
             byte[] secondsClone = seconds.ToArray();
@@ -42,8 +66,48 @@ namespace GhostYak.DateTime
             if (isBigEndian)
                 Array.Reverse(secondsClone);
 
-            _seconds = BitConverter.ToInt32(secondsClone, 0);
+            _seconds = BitConverter.ToInt64(secondsClone, 0);
         }
+        #endregion
+
+        #region override
+
+        public override string ToString()
+        {
+            return ToDateTime().ToString();
+        }
+
+        /// <summary>
+        /// 지정한 개체와 현재 개체가 같은지 여부를 확인합니다.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns>지정한 개체와 현재 개체가 같으면 true, 다르면 false입니다.</returns>
+        public override bool Equals(object obj)
+        {
+            return _seconds == ((UnixTime64)(obj))._seconds;
+        }
+
+        public static bool operator ==(UnixTime64 a, UnixTime64 b)
+        {
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(UnixTime64 a, UnixTime64 b)
+        {
+            return !a.Equals(b);
+        }
+
+        /// <summary>
+        /// 기본 해시 함수로 작동합니다.
+        /// </summary>
+        /// <returns>현재 개체의 해시코드입니다.</returns>
+        public override int GetHashCode()
+        {
+            return (int)_seconds;
+        }
+        #endregion
+
+        #region To___Method()
 
         public System.DateTime ToDateTime()
         {
@@ -51,14 +115,9 @@ namespace GhostYak.DateTime
             return dt.AddSeconds(_seconds);
         }
 
-        public override string ToString()
+        public long ToLong()
         {
-            return _seconds.ToString();
-        }
-
-        public string ToDateTimeString()
-        {
-            return ToDateTime().ToString();
+            return _seconds;
         }
 
         /// <summary>
@@ -70,6 +129,8 @@ namespace GhostYak.DateTime
             return _seconds;
         }
 
+
+
         /// <summary>
         /// 1970-01-01T00:00:00Z 이후 경과된 시간(초)을 배열로 반환합니다.
         /// </summary>
@@ -78,6 +139,8 @@ namespace GhostYak.DateTime
         {
             return BitConverter.GetBytes(_seconds);
         }
+
+
 
         /// <summary>
         /// 1970-01-01T00:00:00Z 이후 경과된 시간(초)을 배열로 만들고 순서를 뒤집어 반환합니다.
@@ -90,40 +153,61 @@ namespace GhostYak.DateTime
             return arr;
         }
 
+
+
+        #endregion
+
+        #region Test
+
+        /// <summary>
+        /// 바이트 배열을 T타입의 구조체로 캐스팅합니다.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="bytes"></param>
+        /// <returns>T타입 </returns>
+        private static T ByteArrayToStructure<T>(byte[] bytes)
+        {
+            GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+            T stuff = (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
+            handle.Free();
+            return stuff;
+        }
+
+
+        /// <summary>
+        /// 유닛 테스트
+        /// </summary>
         public static void Test()
         {
             var dotnetDateTime = new System.DateTime(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            long dotnetUnixTime = (long)((DateTimeOffset)dotnetDateTime).ToUnixTimeSeconds();
+            long srcLong = ((DateTimeOffset)dotnetDateTime).ToUnixTimeSeconds();
+            byte[] srcByteArray = BitConverter.GetBytes(srcLong);
+            byte[] srcByteArrayR = BitConverter.GetBytes(srcLong);
+            Array.Reverse(srcByteArrayR);
+            long srcLongR = BitConverter.ToInt64(srcByteArrayR, 0);
 
-            var myUnixTime1 = new UnixTime64(dotnetUnixTime);
-            var myDateTime1 = myUnixTime1.ToDateTime();
+            var myTime1 = new UnixTime64(srcLong);
+            var myTime2 = new UnixTime64(srcLong, false);
+            var myTime3 = new UnixTime64(srcLongR, true);
+            var myTime4 = new UnixTime64(srcByteArray);
+            var myTime5 = new UnixTime64(srcByteArray, false);
+            var myTime6 = new UnixTime64(srcByteArrayR, true);
 
-            byte[] arr2 = BitConverter.GetBytes(dotnetUnixTime);
-            var myUnixTime2 = new UnixTime64(arr2);
-            var myDateTime2 = myUnixTime2.ToDateTime();
+            Debug.Assert(dotnetDateTime == myTime1.ToDateTime());
+            Debug.Assert(dotnetDateTime == myTime2.ToDateTime());
+            Debug.Assert(dotnetDateTime == myTime3.ToDateTime());
+            Debug.Assert(dotnetDateTime == myTime4.ToDateTime());
+            Debug.Assert(dotnetDateTime == myTime5.ToDateTime());
+            Debug.Assert(dotnetDateTime == myTime6.ToDateTime());
 
-            byte[] arr3 = BitConverter.GetBytes(dotnetUnixTime);
-            var myUnixTime3 = new UnixTime64(arr3, false);
-            var myDateTime3 = myUnixTime3.ToDateTime();
-
-            byte[] arr4Reverse = BitConverter.GetBytes(dotnetUnixTime);
-            Array.Reverse(arr4Reverse);
-            var myUnixTime4 = new UnixTime64(arr4Reverse, true);
-            var myDateTime4 = myUnixTime4.ToDateTime();
-
-            Debug.Assert(dotnetDateTime == myDateTime1);
-            Debug.Assert(dotnetUnixTime == myUnixTime1.ToUnixTimeSeconds());
-
-            Debug.Assert(dotnetDateTime == myDateTime2);
-            Debug.Assert(dotnetUnixTime == myUnixTime2.ToUnixTimeSeconds());
-
-            Debug.Assert(dotnetDateTime == myDateTime3);
-            Debug.Assert(dotnetUnixTime == myUnixTime3.ToUnixTimeSeconds());
-            Debug.Assert(arr3.SequenceEqual(myUnixTime3.ToArray()));
-
-            Debug.Assert(dotnetDateTime == myDateTime4);
-            Debug.Assert(dotnetUnixTime == myUnixTime4.ToUnixTimeSeconds());
-            Debug.Assert(arr4Reverse.SequenceEqual(myUnixTime4.ToArrayReverse()));
+            Debug.Assert(myTime1 == myTime2);
+            Debug.Assert(myTime1 == myTime3);
+            Debug.Assert(myTime1 == myTime4);
+            Debug.Assert(myTime1 == myTime5);
+            Debug.Assert(myTime1 == myTime6);
+            Debug.Assert(myTime1 != new UnixTime64());
         }
+
+        #endregion
     }
 }
