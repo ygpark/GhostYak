@@ -118,6 +118,7 @@
   <ItemGroup>
     <Compile Include="CommandLine\Options.cs" />
     <Compile Include="ConsoleApp\BinGrep.cs" />
+    <Compile Include="DateTime\HanwhaTime.cs" />
     <Compile Include="DateTime\UnixTime64.cs" />
     <Compile Include="DateTime\UnixTime32.cs" />
     <Compile Include="Form\SubFormHelper.cs" />
