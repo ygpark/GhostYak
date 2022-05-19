@@ -20,6 +20,7 @@ namespace GhostYak
             UnixTime32.Test();
             UnixTime64.Test();
             BinaryRegex.Test();
+            BinaryRegexNet.Test();
             HanwhaTime.Test();
         }
     }

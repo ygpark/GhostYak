@@ -3,37 +3,49 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Re2.Net;
 using System.IO;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace GhostYak.Text.RegularExpressions
 {
-    public class BinaryRegex
+    public class BinaryRegexNet
     {
 
         private Regex _regex;
         private static int _TEST_BUFFER_SIZE = 10240;
 
 
-        public BinaryRegex(string pattern)
+        public BinaryRegexNet(string pattern)
         {
-            _regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.Latin1);
+            _regex = new Regex(pattern, RegexOptions.Multiline);
         }
 
         public Match Match(byte[] input)
         {
-            return _regex.Match(input);
+            return this.Match(input, 0, input.Length);
         }
 
         public Match Match(byte[] input, int startat)
         {
-            return _regex.Match(input, startat);
+            return this.Match(input, startat, input.Length);
         }
 
         public Match Match(byte[] input, int beginning, int length)
         {
-            return _regex.Match(input, beginning, length);
+            string sInput = new string('\0', input.Length * 2);
+            unsafe
+            {
+                fixed (char* charArray = sInput)
+                {
+                    byte* buffer = (byte*)(charArray);
+                    for (int i = 0; i < input.Length; i++)
+                    {
+                        buffer[i * 2] = input[i];
+                    }
+                }
+            }
+            return _regex.Match(sInput, beginning, length);
         }
 
         //------------------------------------------------------------------
@@ -42,14 +54,26 @@ namespace GhostYak.Text.RegularExpressions
 
         public MatchCollection Matches(byte[] input)
         {
-            return _regex.Matches(input);
+            return this.Matches(input, 0);
         }
 
 
 
         public MatchCollection Matches(byte[] input, int startat)
         {
-            return _regex.Matches(input, startat);
+            string sInput = new string('\0', input.Length * 2);
+            unsafe
+            {
+                fixed (char* charArray = sInput)
+                {
+                    byte* buffer = (byte*)(charArray);
+                    for (int i = 0; i < input.Length; i++)
+                    {
+                        buffer[i * 2] = input[i];
+                    }
+                }
+            }
+            return _regex.Matches(sInput, startat);
         }
 
 
@@ -59,14 +83,40 @@ namespace GhostYak.Text.RegularExpressions
 
         public static Match Match(byte[] input, string pattern)
         {
-            return Regex.Match(input, pattern, RegexOptions.Multiline | RegexOptions.Latin1);
+            string sInput = new string('\0', input.Length * 2);
+            unsafe
+            {
+                fixed (char* charArray = sInput)
+                {
+                    byte* buffer = (byte*)(charArray);
+                    for (int i = 0; i < input.Length; i++)
+                    {
+                        buffer[i * 2] = input[i];
+                    }
+                }
+            }
+
+            return Regex.Match(sInput, pattern, RegexOptions.Multiline);
         }
 
 
 
         public static MatchCollection Matches(byte[] input, string pattern)
         {
-            return Regex.Matches(input, pattern, RegexOptions.Multiline | RegexOptions.Latin1);
+            string sInput = new string('\0', input.Length * 2);
+            unsafe
+            {
+                fixed (char* charArray = sInput)
+                {
+                    byte* buffer = (byte*)(charArray);
+                    for (int i = 0; i < input.Length; i++)
+                    {
+                        buffer[i * 2] = input[i];
+                    }
+                }
+            }
+
+            return Regex.Matches(sInput, pattern, RegexOptions.Multiline);
         }
 
         public static void Test()
@@ -88,7 +138,7 @@ namespace GhostYak.Text.RegularExpressions
                 _source[i] = (byte)i;
             BinaryRegex br = new BinaryRegex("\x00[\x00-\xFF]{254}\xFF");
             var matchs = br.Matches(_source);
-            Debug.Assert(_TEST_BUFFER_SIZE / 256 == matchs.Count);
+            Debug.Assert(_TEST_BUFFER_SIZE/256 == matchs.Count);
         }
 
         private static void TestRegexMatchesByStatic()
