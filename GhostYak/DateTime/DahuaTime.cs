@@ -68,8 +68,13 @@ namespace GhostYak.DateTime
 
         public static DahuaTime FromDateTime(System.DateTime dateTime)
         {
-            //int unixTime = (int)((DateTimeOffset)dateTime).ToUnixTimeSeconds();
-
+            //21098765432109876543210987654321 //4byte bit order
+            //11111100000000000000000000000000 //MASK for year
+            //00000011110000000000000000000000 //MASK for month
+            //00000000001111100000000000000000 //MASK for day
+            //00000000000000011111000000000000 //MASK for hour
+            //00000000000000000000111111000000 //MASK for minute
+            //00000000000000000000000000111111 //MASK for second
             uint year = ((uint)dateTime.Year - (uint)2000) << 26;
             uint month = (uint)dateTime.Month << 22;
             uint day = (uint)dateTime.Day << 17;
