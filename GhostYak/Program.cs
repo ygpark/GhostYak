@@ -22,6 +22,7 @@ namespace GhostYak
             BinaryRegex.Test();
             BinaryRegexNet.Test();
             HanwhaTime.Test();
+            DahuaTime.Test();
         }
     }
 }

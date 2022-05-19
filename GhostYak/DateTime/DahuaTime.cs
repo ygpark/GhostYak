@@ -1,9 +1,4 @@
-﻿/*
-할일
-1. 연산자== 오버라이딩
-    
-*/
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,21 +9,21 @@ using System.Diagnostics;
 namespace GhostYak.DateTime
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public class HanwhaTime
+    public class DahuaTime
     {
         private uint _bitfieldTime;
 
         #region CTor
-        public HanwhaTime()
+        public DahuaTime()
         {
             // Marshal.PtrToStructure 때문에 반드시 필요하다.
         }
 
-        public HanwhaTime(uint timeUnion) : this(timeUnion, false)
+        public DahuaTime(uint timeUnion) : this(timeUnion, false)
         {
         }
 
-        public HanwhaTime(uint timeUnion, bool isBigEndian)
+        public DahuaTime(uint timeUnion, bool isBigEndian)
         {
             if(isBigEndian)
             {
@@ -47,7 +42,7 @@ namespace GhostYak.DateTime
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <param name="bitfieldTime"></param>
-        public HanwhaTime(byte[] bitfieldTime) : this(bitfieldTime, false)
+        public DahuaTime(byte[] bitfieldTime) : this(bitfieldTime, false)
         { 
         }
 
@@ -57,7 +52,7 @@ namespace GhostYak.DateTime
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <param name="bitfieldTime"></param>
         /// <param name="isLittleEndian"></param>
-        public HanwhaTime(byte[] bitfieldTime, bool isBigEndian)
+        public DahuaTime(byte[] bitfieldTime, bool isBigEndian)
         {
             byte[] clone = bitfieldTime.ToArray();
             int len = BitConverter.GetBytes(_bitfieldTime).Length;
@@ -71,16 +66,18 @@ namespace GhostYak.DateTime
             _bitfieldTime = BitConverter.ToUInt32(clone, 0);
         }
 
-        public static HanwhaTime FromDateTime(System.DateTime dateTime)
+        public static DahuaTime FromDateTime(System.DateTime dateTime)
         {
-            int unixTime = (int)((DateTimeOffset)dateTime).ToUnixTimeSeconds();
-            unixTime -= 0x40000000;
+            //int unixTime = (int)((DateTimeOffset)dateTime).ToUnixTimeSeconds();
 
-            uint time1 = (uint)((unixTime & (0xFF000000 >> 2)) << 2);
-            uint time2 = (uint)((unixTime & (0x007FFF00 >> 1)) << 1);//15bit
-            uint time3 = (uint)(unixTime & 0x0000007F);//7bit
+            uint year = ((uint)dateTime.Year - (uint)2000) << 26;
+            uint month = (uint)dateTime.Month << 22;
+            uint day = (uint)dateTime.Day << 17;
+            uint hour = (uint)dateTime.Hour << 12;
+            uint minute = (uint)dateTime.Minute << 6;
+            uint second = (uint)dateTime.Second;
 
-            return new HanwhaTime(time1 + time2 + time3);
+            return new DahuaTime(year | month | day | hour | minute | second);
         }
         #endregion
 
@@ -101,7 +98,7 @@ namespace GhostYak.DateTime
         /// <returns>지정한 개체와 현재 개체가 같으면 true, 다르면 false입니다.</returns>
         public override bool Equals(object obj)
         {
-            return ToDateTime() == ((HanwhaTime)(obj)).ToDateTime();
+            return ToDateTime() == ((DahuaTime)(obj)).ToDateTime();
         }
 
         /// <summary>
@@ -110,7 +107,7 @@ namespace GhostYak.DateTime
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static bool operator== (HanwhaTime a, HanwhaTime b)
+        public static bool operator== (DahuaTime a, DahuaTime b)
         {
             return a.Equals(b);
         }
@@ -121,7 +118,7 @@ namespace GhostYak.DateTime
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static bool operator !=(HanwhaTime a, HanwhaTime b)
+        public static bool operator !=(DahuaTime a, DahuaTime b)
         {
             return !a.Equals(b);
         }
@@ -144,24 +141,28 @@ namespace GhostYak.DateTime
         /// <returns>System.DateTime 개체</returns>
         public System.DateTime ToDateTime()
         {
-            //21098765432109876543210987654321 //4byte bit order
-            
-            //11111111000000000000000000000000 //0xFF000000
-            //00111111110000000000000000000000 //0xFF000000 >> 2
+            try
+            {
+                //21098765432109876543210987654321 //4byte bit order
+                //11111100000000000000000000000000 //MASK for year
+                //00000011110000000000000000000000 //MASK for month
+                //00000000001111100000000000000000 //MASK for day
+                //00000000000000011111000000000000 //MASK for hour
+                //00000000000000000000111111000000 //MASK for minute
+                //00000000000000000000000000111111 //MASK for second
+                int year = (int)((_bitfieldTime >> 26) + 2000);
+                int month = (int)((_bitfieldTime >> 22) & 0xF);
+                int day = (int)((_bitfieldTime >> 17) & 0x1F);
+                int hour = (int)((_bitfieldTime >> 12) & 0x1F);
+                int minute = (int)((_bitfieldTime >> 6) & 0x3F);
+                int second = (int)(_bitfieldTime & 0x3F);
 
-            //00000000011111111111111100000000 //0x007FFF00
-            //00000000001111111111111110000000 //0x007FFF00 >> 1
-            
-            //00000000000000000000000001111111 //0x0000007F
-
-            long time1 = (_bitfieldTime & 0xFF000000) >> 2;
-            long time2 = (_bitfieldTime & 0x007FFF00) >> 1;//15bit
-            long time3 = (_bitfieldTime & 0x0000007F);//7bit
-
-            long unixTime = time1 + time2 + time3 + 0x40000000;
-            System.DateTime epoch = new System.DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            epoch = epoch.AddSeconds(unixTime);
-            return epoch;
+                return new System.DateTime(year, month, day, hour, minute, second);
+            }
+            catch(ArgumentOutOfRangeException e)
+            {
+                return System.DateTime.MaxValue;
+            }
         }
 
         /// <summary>
@@ -228,7 +229,7 @@ namespace GhostYak.DateTime
         public static void Test()
         {
             var dotnetDateTime = new System.DateTime(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var myTime1 = HanwhaTime.FromDateTime(dotnetDateTime);
+            var myTime1 = DahuaTime.FromDateTime(dotnetDateTime);
                 
             uint srcUInt = myTime1.ToUInt();
             byte[] srcByteArray = myTime1.ToArray();//-> Marshal
@@ -236,13 +237,13 @@ namespace GhostYak.DateTime
             uint srcUIntR = BitConverter.ToUInt32(srcByteArrayR, 0);
             uint data4 = myTime1.ToUnixTimeSeconds();
 
-            var myTime2 = new HanwhaTime(srcUInt);
-            var myTime3 = new HanwhaTime(srcUInt, false);
-            var myTime4 = new HanwhaTime(srcUIntR, true);
-            var myTime5 = new HanwhaTime(srcByteArray);
-            var myTime6 = new HanwhaTime(srcByteArray, false);
-            var myTime7 = new HanwhaTime(srcByteArrayR, true);
-            var myTime8 = ByteArrayToStructure <HanwhaTime> (srcByteArray);
+            var myTime2 = new DahuaTime(srcUInt);
+            var myTime3 = new DahuaTime(srcUInt, false);
+            var myTime4 = new DahuaTime(srcUIntR, true);
+            var myTime5 = new DahuaTime(srcByteArray);
+            var myTime6 = new DahuaTime(srcByteArray, false);
+            var myTime7 = new DahuaTime(srcByteArrayR, true);
+            var myTime8 = ByteArrayToStructure <DahuaTime> (srcByteArray);
 
             Debug.Assert(dotnetDateTime == myTime2.ToDateTime());
             Debug.Assert(dotnetDateTime == myTime3.ToDateTime());
@@ -259,7 +260,7 @@ namespace GhostYak.DateTime
             Debug.Assert(myTime1 == myTime6);
             Debug.Assert(myTime1 == myTime7);
             Debug.Assert(myTime1 == myTime8);
-            Debug.Assert(myTime2 != new HanwhaTime());
+            Debug.Assert(myTime2 != new DahuaTime());
         }
 
         #endregion
