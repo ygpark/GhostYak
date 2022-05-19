@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace GhostYak.Form
+namespace GhostYak.Windows.Forms
 {
     public class SubFormHelper
     {
