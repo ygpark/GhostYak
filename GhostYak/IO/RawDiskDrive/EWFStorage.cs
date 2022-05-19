@@ -104,7 +104,7 @@ namespace GhostYak.IO.RawDiskDrive
                     }
                 }
                         
-                    list.Add(file);
+                list.Add(file);
             }
             return list.ToArray();
         }
