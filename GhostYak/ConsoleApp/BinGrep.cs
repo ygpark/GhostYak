@@ -218,75 +218,75 @@ namespace GhostYak.ConsoleApp
 
         private static void PrintStreamByRegex(Stream stream, int width, int limit, string separator, string expression)
         {
-            bool isNotEndOfStream;
-            byte[] buffer = new byte[4 * 1024];
+            byte[] buffer = new byte[100 * 1024];
+            byte[] bufferValue = new byte[width];
             int BUFFER_SIZE = buffer.Length;
             int numberOfRead;
             int nHexOffsetLength = string.Format("{0:X}", stream.Length).Length;
             int line = 0;
-            long lastHitPos = 0;
-            long newHitPos;
-            long startOffsetToRead = stream.Position;
-            const long BUFFER_PADDING = 200;
+            const long BUFFER_PADDING = 300;//<주의> 반드시 buffer[] 사이즈보다 작을 것
             string sHexOffsetLength = nHexOffsetLength.ToString();
-            bool isOverflow = false;
+            long tmpPos;
+            string value;
+            long offset;
+            long latestOffset = -1;
+
+            expression = ChangeDotToByteExpression(expression);
 
             while ((numberOfRead = stream.Read(buffer, 0, BUFFER_SIZE)) != 0)
             {
+                //찌꺼기 제거
+                if (numberOfRead != BUFFER_SIZE)
+                {
+                    Array.Clear(buffer, numberOfRead, BUFFER_SIZE - numberOfRead);
+                }
+
                 Re2.Net.MatchCollection matches = BinaryRegex.Matches(buffer, expression);
                 foreach (Re2.Net.Match match in matches)
                 {
-                    newHitPos = startOffsetToRead + match.Index;
-                    if (newHitPos < lastHitPos)
+                    if (buffer.Length >= match.Index + width)
+                    {
+                        value = BitConverter.ToString(buffer, match.Index, width).Replace("-", separator);
+                        offset = stream.Position - numberOfRead + match.Index;
+                    }
+                    else
+                    {
+                        //
+                        // 출력해야할 바이트가 buffer 배열 끝에 있는 경우 직접 읽어온다.
+                        //
+                        tmpPos = stream.Position;//push
+                        stream.Position = stream.Position - buffer.Length + match.Index;
+                        stream.Read(bufferValue, 0, width);
+                        stream.Position = tmpPos;//pop
+
+                        value = BitConverter.ToString(bufferValue, 0, width).Replace("-", separator);
+                        offset = stream.Position - numberOfRead + match.Index;
+                    }
+
+
+                    //
+                    // BUFFER_PADDING에 의한 중복 Hit 방지
+                    //
+                    if (0 < latestOffset && latestOffset == offset)
                     {
                         continue;
                     }
-                    else if (newHitPos == lastHitPos && isOverflow == false)
+                    if (offset != latestOffset)
                     {
-                        continue;
-                    }
-                    else if (newHitPos == lastHitPos && isOverflow == true)
-                    {
-                        isOverflow = false;
+                        latestOffset = offset;
                     }
 
-                    //
-                    // 정규식은 hit했는데, 출력할 영역이 buffer overflow 발생할 경우 hit 지점부터 다시 Read한다.
-                    // BufferOverflow 오류 방지 목적
-                    //
-                    if (buffer.Length < match.Index + width)
-                    {
-                        lastHitPos = startOffsetToRead + match.Index;
-                        stream.Position = lastHitPos;
-                        startOffsetToRead = stream.Position;
-                        isOverflow = true;
-                        break;
-                    }
-
-                    string value = BitConverter.ToString(buffer, match.Index, width).Replace("-", separator);
-                    long displayOffset = startOffsetToRead + match.Index;
 
                     line++;
 
                     if (_isShowOffset == true)
-                        Console.WriteLine(string.Format("{0:X" + sHexOffsetLength + "}h : {1}", displayOffset, value));
+                        Console.WriteLine(string.Format("{0:X" + sHexOffsetLength + "}h : {1}", offset, value));
                     else
                         Console.WriteLine($"{value}");
-
-                    lastHitPos = startOffsetToRead + match.Index;
                 }
 
-
-                isNotEndOfStream = (numberOfRead == BUFFER_SIZE);
-                if (isNotEndOfStream && !isOverflow)
+                if (numberOfRead == buffer.Length)
                 {
-                    /*
-                     * BUFFER_PADDING
-                     * 
-                     * 다음 버퍼를 읽어올 때 BUFFER_PADDING 만큼 중첩해서 읽는다. 
-                     * 정규식이 BUFFER와 다음 BUFFER 사이에 끼어있을 때를 방지하기 위한 장치이다.
-                     * CCTV용 정규식은 보통 150~200정도 나온다.
-                     */
                     stream.Position = stream.Position - BUFFER_PADDING;
                 }
 
@@ -295,13 +295,8 @@ namespace GhostYak.ConsoleApp
                 {
                     break;
                 }
-
-                //상태 저장
-                startOffsetToRead = stream.Position;
             }
         }
-
-
 
         private static void PrintFileStream(Stream stream, int width, int limit, string separator)
         {
@@ -371,8 +366,6 @@ namespace GhostYak.ConsoleApp
             Console.WriteLine("");
         }
 
-
-
         private static void ShowVersion()
         {
             string name = GhostYak.Version.AssemblyTitle;
@@ -381,8 +374,6 @@ namespace GhostYak.ConsoleApp
 
             Console.WriteLine($"{name} v{version} (BUILD {buildDate})");
         }
-
-
 
         private static bool IsAdministrator()
         {
@@ -393,6 +384,44 @@ namespace GhostYak.ConsoleApp
                 return principal.IsInRole(WindowsBuiltInRole.Administrator);
             }
             return false;
+        }
+
+        private static string ChangeDotToByteExpression(string expression)
+        {
+            bool isWorking = true;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < expression.Length; i++)
+            {
+                if (expression[i] == '[')
+                {
+                    isWorking = false;
+                }
+                if (expression[i] == ']')
+                {
+                    isWorking = true;
+                }
+
+                if (isWorking)
+                {
+                    if (0 == i && expression[i] == '.')
+                    {
+                        sb.Append("[\\x00-\\xFF]");
+                    }
+                    else if (1 < i && expression[i - 1] != '\\' && expression[i] == '.')
+                    {
+                        sb.Append("[\\x00-\\xFF]");
+                    }
+                    else
+                    {
+                        sb.Append(expression[i]);
+                    }
+                }
+                else
+                {
+                    sb.Append(expression[i]);
+                }
+            }
+            return sb.ToString();
         }
 
     }
