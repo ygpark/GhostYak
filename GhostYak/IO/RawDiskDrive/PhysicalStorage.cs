@@ -8,6 +8,7 @@ using System.IO;
 using System.Diagnostics;
 using GhostYak.IO.DeviceIOControl.Wrapper;
 using GhostYak.IO.DeviceIOControl.Objects.Disk;
+using GhostYak.WMI;
 using Microsoft.Win32.SafeHandles;
 
 
@@ -17,9 +18,7 @@ namespace GhostYak.IO.RawDiskDrive
     {
         private string _interface;
 
-        private DISK_GEOMETRY_EX _diskGeometryEx;
-        private STORAGE_DEVICE_DESCRIPTOR _storage_device_descriptor;
-
+        private Win32_DiskDrive _win32_diskdrive;
         private int _Number;
         /// <summary>
         /// 드라이브 넘버
@@ -29,16 +28,16 @@ namespace GhostYak.IO.RawDiskDrive
         private List<LogicalStorage> _Volumes = new List<LogicalStorage>();
         public List<LogicalStorage> Volumes { get => _Volumes; }
 
-        public int SectorsPerTrack { get => _diskGeometryEx.Geometry.SectorsPerTrack; }
-        public long Cylinder { get => _diskGeometryEx.Geometry.Cylinders; }
-        public MEDIA_TYPE MediaType { get => _diskGeometryEx.Geometry.MediaType; }
+        public int SectorsPerTrack { get => (int)_win32_diskdrive.SectorsPerTrack; }
+        public long Cylinder { get => (long)_win32_diskdrive.TotalCylinders; }
+        public string MediaType { get => _win32_diskdrive.MediaType; }
 
         private string _SerialNumber;
         public string SerialNumber { get => _SerialNumber; }
         private string _ModelNumber;
         public string ModelNumber { get => _ModelNumber; }
         public string Interface { get => _interface; }
-        public string BusType { get => _storage_device_descriptor.BusTypeToString; }
+        public string BusType { get => _win32_diskdrive.InterfaceType; }
 
         public override string NameForDisplay { get => $"디스크 {Number}"; }
 
@@ -67,55 +66,17 @@ namespace GhostYak.IO.RawDiskDrive
 
         private void Init()
         {
-            ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_DiskDrive");
+            var diskDrive = Win32_DiskDrive_Query.Instance;
+            diskDrive.Refresh();
+            var diskDriveInfo = diskDrive.ToList().Find(o => o.DeviceID == Path);
+            _win32_diskdrive = diskDriveInfo;
 
-            foreach (ManagementObject queryObj in searcher.Get().Cast<ManagementObject>().OrderBy(obj => obj["DeviceID"]))
-            {
-                if(queryObj["DeviceID"].ToString() == Path)
-                {
-                    _interface = queryObj["InterfaceType"].ToString().Trim();
-                    _ModelNumber = queryObj["Model"].ToString().Trim().Replace(" SCSI Disk Device", "").Replace(" USB Device", "");
-                    _SerialNumber = queryObj["SerialNumber"].ToString().Trim();
-                    break;
-                }
-            }
-
-            SafeFileHandle handle = Win32Native.CreateFile(Path, FileAccess.Read, FileShare.ReadWrite, IntPtr.Zero, FileMode.Open, FileAttributes.Normal, IntPtr.Zero);
-            if (handle.IsInvalid)
-            {
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            }
-
-            using (DiskDeviceWrapper diskIo = new DiskDeviceWrapper(handle, true))
-            {
-                using (StorageDeviceWrapper storageio = new StorageDeviceWrapper(handle, false))
-                {
-                    try
-                    {
-                        _diskGeometryEx = diskIo.DiskGetDriveGeometryEx();
-                        Size = _diskGeometryEx.DiskSize;
-                        BytesPerSector = _diskGeometryEx.Geometry.BytesPerSector;
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine(e.ToString());
-                    }
-
-                    try
-                    {
-                        _storage_device_descriptor = storageio.StorageQueryProperty();
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine(e.ToString());
-                    }
-                }
-            }
-
-            handle.Close();
+            _interface = diskDriveInfo.InterfaceType;
+            _ModelNumber = diskDriveInfo.Model.Replace(" SCSI Disk Device", "").Replace(" USB Device", "");
+            _SerialNumber = diskDriveInfo.SerialNumber;
+            Size = (long)diskDriveInfo.Size;
+            BytesPerSector = (int)diskDriveInfo.BytesPerSector;
         }
-
-
 
         /// <summary> 
         /// Returns a list of physical drive IDs 
@@ -126,18 +87,14 @@ namespace GhostYak.IO.RawDiskDrive
         public static List<string> GetPhysicalDriveNames()
         {
             List<string> drivelist = new List<string>();
-            try
+
+            var diskDrive = Win32_DiskDrive_Query.Instance;
+            diskDrive.Refresh();
+            foreach (var item in diskDrive.ToList())
             {
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_DiskDrive");
-                foreach (ManagementObject queryObj in searcher.Get().Cast<ManagementObject>().OrderBy(obj => obj["DeviceID"]))
-                {
-                    drivelist.Add(queryObj["DeviceID"].ToString());
-                }
+                drivelist.Add(item.DeviceID);
             }
-            catch (ManagementException)
-            {
-                return null;
-            }
+
             return drivelist;
         }
 
@@ -145,14 +102,14 @@ namespace GhostYak.IO.RawDiskDrive
         {
             List<string> names = PhysicalStorage.GetPhysicalDriveNames();
             PhysicalStorage[] pds = new PhysicalStorage[names.Count];
-            for(int i =0; i < names.Count; i++)
+            for (int i = 0; i < names.Count; i++)
             {
                 pds[i] = new PhysicalStorage(names[i]);
             }
             return pds;
         }
 
-        
+
 
         //TODO
         public override string ToString()

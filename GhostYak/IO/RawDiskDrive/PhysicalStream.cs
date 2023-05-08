@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using GhostYak.IO.DeviceIOControl.Objects.Disk;
 using GhostYak.IO.DeviceIOControl.Wrapper;
+using GhostYak.WMI;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,46 +16,38 @@ namespace GhostYak.IO.RawDiskDrive
     class PhysicalStream : BaseStream
     {
         private SafeFileHandle _handle = null;
-        private DISK_GEOMETRY_EX _diskGeometryEx;
         private int _bytesPerSector;
 
         public PhysicalStream(string path)
         {
+            //--------------------------------------------------------------------------------
+            // DATE: 2023-05-04
+            // AUTHOR: 박영기
+            // REMARKS: 특정 HDD의 Size 정보를 읽어오지 못하는 오류가 확인되었다.
+            //          현재 사용중인 DiskDeviceWrapper class 를 대체할만한 API가 WMI Win32_DiskDrive 밖에는 마땅히 없다.
+            //          WMI Win32_DiskDrive API의 Size는 실제 HDD의 Sector보다 약 400K정도 작은 값을 리턴한다.
+            //          용량의 오차는 저장매체별로 상이하지만 무시할만한 수준이다.
+            //--------------------------------------------------------------------------------
+
             _handle = Win32Native.CreateFile(path, FileAccess.Read, FileShare.ReadWrite, IntPtr.Zero, FileMode.Open, FileAttributes.Normal, IntPtr.Zero);
 
-            using (DiskDeviceWrapper diskIo = new DiskDeviceWrapper(_handle, false))
-            {
-                _diskGeometryEx = diskIo.DiskGetDriveGeometryEx();
-                this.length = _diskGeometryEx.DiskSize;
-                this._bytesPerSector = _diskGeometryEx.Geometry.BytesPerSector;
-            }
-                
+            var diskDrive = Win32_DiskDrive_Query.Instance;
+            diskDrive.Refresh();
+            var diskDriveInfo = diskDrive.ToList().Find(o => o.DeviceID == path);
+
+            this.length = (long)diskDriveInfo.Size;
+            this._bytesPerSector = (int)diskDriveInfo.BytesPerSector;
             this.canRead = true;
             this.canSeek = true;
             this.canWrite = false;
         }
 
-        public PhysicalStream(SafeFileHandle handle)
-        {
-            _handle = handle;
-
-            using (DiskDeviceWrapper diskIo = new DiskDeviceWrapper(_handle, false))
-            {
-                _diskGeometryEx = diskIo.DiskGetDriveGeometryEx();
-                this.length = _diskGeometryEx.DiskSize;
-                this._bytesPerSector = _diskGeometryEx.Geometry.BytesPerSector;
-            }
-
-            this.canRead = true;
-            this.canSeek = true;
-            this.canWrite = false;
-        }
         public override int Read(byte[] buffer, int offset, int count)
         {
             int hr = 0;
             int br = 0;
 
-            if(this.length < this.position + count)
+            if (this.length < this.position + count)
             {
                 count = (int)(this.length - this.position);
             }
@@ -64,7 +57,7 @@ namespace GhostYak.IO.RawDiskDrive
             {
 
 
-                br = ReadFileNative(_handle, buffer, offset, count, out hr);
+                br = ReadFileNative(_handle, buffer, offset, count, out hr);//throw new IndexOutOfRangeException()
                 if (br == -1)
                 {
                     switch (hr)
@@ -108,7 +101,8 @@ namespace GhostYak.IO.RawDiskDrive
                             //섹터배수가 아닌 경우 예외 발생함1
                             throw new ArgumentException("INVALID_PARAMETER");
                         default:
-                            //섹터배수가 아닌 경우 예외 발생함2
+                            //섹터배수가 아닌 경우 예외 발생함2...
+                            //<2021-10-09>HDD가 갑자기 Offline이 되어도 발생함.
                             throw new Win32Exception(hr);
                     }
                 }
@@ -116,7 +110,7 @@ namespace GhostYak.IO.RawDiskDrive
 
                 this.position += br;
             }
-            
+
             return br;
         }
 
@@ -156,7 +150,7 @@ namespace GhostYak.IO.RawDiskDrive
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            
+
             long newpos = 0;
             switch (origin)
             {

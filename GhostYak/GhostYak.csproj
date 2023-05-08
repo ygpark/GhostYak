@@ -122,7 +122,7 @@
     <Compile Include="DateTime\HanwhaTime.cs" />
     <Compile Include="DateTime\UnixTime64.cs" />
     <Compile Include="DateTime\UnixTime32.cs" />
-    <Compile Include="Form\SubFormHelper.cs" />
+    <Compile Include="Windows\Forms\SubFormHelper.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\BLOCK_PREFETCH.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION.cs" />
     <Compile Include="IO\DeviceIOControl\Objects\Disk\DISK_CACHE_INFORMATION_UNION.cs" />
@@ -236,6 +236,8 @@
     <Compile Include="Text\RegularExpressions\BinaryRegexNet.cs" />
     <Compile Include="Text\RegularExpressions\BinaryRegex.cs" />
     <Compile Include="Version.cs" />
+    <Compile Include="WMI\Win32_DiskDriveQuery.cs" />
+    <Compile Include="WMI\Win32_DiskDrive.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -252,5 +254,6 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
