@@ -204,7 +204,7 @@ namespace GhostYak.WMI
             query.Refresh();
             for (int i = 0; i < query.Count; i++)
             {
-                Console.WriteLine(query[i].ToShortString());
+                Console.WriteLine(query[i].ToString());
             }
             Console.WriteLine("");
             Console.WriteLine("---------------------------------------");

@@ -19,31 +19,27 @@ namespace GhostYak
     {
         static void Main(string[] args)
         {
-            UnixTime32.Test();
-            UnixTime64.Test();
-            BinaryRegex.Test();
-            BinaryRegexNet.Test();
-            HanwhaTime.Test();
-            DahuaTime.Test();
+            //UnixTime32.Test();
+            //UnixTime64.Test();
+            //BinaryRegex.Test();
+            //BinaryRegexNet.Test();
+            //HanwhaTime.Test();
+            //DahuaTime.Test();
+            //Win32_DiskDrive_Query.Test();
+            //GhostYak.IO.RawDiskDrive.PhysicalStream.Test();
 
-            Win32_DiskDrive_Query.Test();
-            //TestPhysicalStream();
+            TestWMIWin32_DiskDrive_AND_PhysicalStream_Length();
         }
 
-        static void TestPhysicalStream()
+        static void TestWMIWin32_DiskDrive_AND_PhysicalStream_Length()
         {
-            PhysicalStorage ps = new PhysicalStorage(0);
-            using (Stream stream = ps.OpenRead())
+            var query = Win32_DiskDrive_Query.Instance;
+            foreach (var disk in query.ToList())
             {
-                byte[] buffer = new byte[512];
-                int read = stream.Read(buffer, 0, buffer.Length);
-                if (read != buffer.Length)
+                using (var stream = new PhysicalStream(disk.DeviceID))
                 {
-                    Console.WriteLine($"Can't read {buffer.Length} bytes");
-                    return;
+                    Console.WriteLine($"{disk.ToShortString()}, {stream.Length}");
                 }
-                var hexdump = GhostYak.Text.HexConverter.ToString(buffer, 16);
-                Console.WriteLine(hexdump);
             }
         }
     }

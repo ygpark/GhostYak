@@ -18,6 +18,35 @@ namespace GhostYak.IO.RawDiskDrive
         private SafeFileHandle _handle = null;
         private int _bytesPerSector;
 
+        // Win32 API 함수 선언
+        const uint IOCTL_DISK_GET_DRIVE_GEOMETRY_EX = 0x700A0;
+        const int INVALID_HANDLE_VALUE = -1;
+
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool DeviceIoControl(SafeFileHandle hDevice, uint dwIoControlCode, IntPtr lpInBuffer, int nInBufferSize, ref DISK_GEOMETRY_EX lpOutBuffer, int nOutBufferSize, out int lpBytesReturned, IntPtr lpOverlapped);
+
+        // DISK_GEOMETRY_EX 구조체
+        [StructLayout(LayoutKind.Sequential)]
+        struct DISK_GEOMETRY_EX
+        {
+            public DISK_GEOMETRY Geometry;
+            public long DiskSize;
+            public byte Data;
+        }
+
+        // DISK_GEOMETRY 구조체
+        [StructLayout(LayoutKind.Sequential)]
+        struct DISK_GEOMETRY
+        {
+            public long Cylinders;
+            public uint MediaType;
+            public uint TracksPerCylinder;
+            public uint SectorsPerTrack;
+            public uint BytesPerSector;
+        }
+
+
         public PhysicalStream(string path)
         {
             //--------------------------------------------------------------------------------
@@ -35,7 +64,8 @@ namespace GhostYak.IO.RawDiskDrive
             diskDrive.Refresh();
             var diskDriveInfo = diskDrive.ToList().Find(o => o.DeviceID == path);
 
-            this.length = (long)diskDriveInfo.Size;
+            //this.length = (long)diskDriveInfo.Size;
+            this.length = GetFileSize();
             this._bytesPerSector = (int)diskDriveInfo.BytesPerSector;
             this.canRead = true;
             this.canSeek = true;
@@ -190,6 +220,41 @@ namespace GhostYak.IO.RawDiskDrive
         public override void Close()
         {
             _handle.Close();
+        }
+
+        public long GetFileSize()
+        {
+            long diskSize = long.MaxValue;
+
+            // DISK_GEOMETRY_EX 구조체를 초기화합니다.
+            DISK_GEOMETRY_EX diskGeometry = new DISK_GEOMETRY_EX();
+            int bytesReturned;
+
+            // IOCTL_DISK_GET_DRIVE_GEOMETRY_EX 명령을 사용하여 디스크의 기하학 정보를 가져옵니다.
+            if (!DeviceIoControl(_handle, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, IntPtr.Zero, 0, ref diskGeometry, Marshal.SizeOf(diskGeometry), out bytesReturned, IntPtr.Zero))
+            {
+                Console.WriteLine("Failed to get disk geometry.");
+                return long.MaxValue;
+            }
+
+            // 하드디스크의 크기를 출력합니다.
+            diskSize = diskGeometry.DiskSize;
+            //Console.WriteLine("Disk size: " + diskSize);
+
+            return diskSize;
+        }
+
+        public static void Test()
+        {
+            using (var stream = new PhysicalStream(@"\\.\PHYSICALDRIVE0"))
+            {
+                byte[] buffer = new byte[512];
+                stream.Position = 22800262757888;
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                var str = GhostYak.Text.HexConverter.ToString(buffer);
+                Console.WriteLine(str);
+                Console.WriteLine(stream.Length);
+            }
         }
     }
 }
