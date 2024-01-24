@@ -12,7 +12,7 @@ namespace GhostYak.Text.RegularExpressions
     public class BinaryRegexNet
     {
 
-        private Regex _regex;
+        private System.Text.RegularExpressions.Regex _regex;
         private static int _TEST_BUFFER_SIZE = 10240;
 
 

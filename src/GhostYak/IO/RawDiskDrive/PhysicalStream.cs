@@ -18,10 +18,13 @@ namespace GhostYak.IO.RawDiskDrive
         private SafeFileHandle _handle = null;
         private int _bytesPerSector;
 
+        #region DllImport
         // Win32 API 함수 선언
         const uint IOCTL_DISK_GET_DRIVE_GEOMETRY_EX = 0x700A0;
         const int INVALID_HANDLE_VALUE = -1;
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal unsafe static extern int ReadFile(SafeFileHandle handle, byte* bytes, int numBytesToRead, out int numBytesRead, IntPtr mustBeZero);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool DeviceIoControl(SafeFileHandle hDevice, uint dwIoControlCode, IntPtr lpInBuffer, int nInBufferSize, ref DISK_GEOMETRY_EX lpOutBuffer, int nOutBufferSize, out int lpBytesReturned, IntPtr lpOverlapped);
@@ -46,6 +49,9 @@ namespace GhostYak.IO.RawDiskDrive
             public uint BytesPerSector;
         }
 
+        #endregion
+
+
 
         public PhysicalStream(string path)
         {
@@ -64,7 +70,15 @@ namespace GhostYak.IO.RawDiskDrive
             diskDrive.Refresh();
             var diskDriveInfo = diskDrive.ToList().Find(o => o.DeviceID == path);
 
-            //this.length = (long)diskDriveInfo.Size;
+            //--------------------------------------------------------------------------------
+            //
+            // Win32_DiskDrive.Size는 실제 HDD의 Size보다 약 400KB정도 작은 부정확한 값을 리턴한다.
+            // 따라서 DeviceIoControl() API를 이용하여 실제 HDD의 Size를 구한다.
+            // 
+            // - this.length = (long)diskDriveInfo.Size;
+            // + this.length = GetFileSize();
+            //
+            //--------------------------------------------------------------------------------
             this.length = GetFileSize();
             this._bytesPerSector = (int)diskDriveInfo.BytesPerSector;
             this.canRead = true;
@@ -74,8 +88,8 @@ namespace GhostYak.IO.RawDiskDrive
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            int hr = 0;
-            int br = 0;
+            int lastError;
+            int bytesRead = 0;
 
             if (this.length < this.position + count)
             {
@@ -87,24 +101,9 @@ namespace GhostYak.IO.RawDiskDrive
             {
 
 
-                br = ReadFileNative(_handle, buffer, offset, count, out hr);//throw new IndexOutOfRangeException()
-                if (br == -1)
-                {
-                    switch (hr)
-                    {
-                        case 109:
-                            br = 0;
-                            break;
-                        case 87:
-                            //섹터배수가 아닌 경우 예외 발생함1
-                            throw new ArgumentException("INVALID_PARAMETER");
-                        default:
-                            //섹터배수가 아닌 경우 예외 발생함2
-                            throw new Win32Exception(hr);
-                    }
-                }
-
-                this.position += br;
+                bytesRead = ReadFileNative(_handle, buffer, offset, count, out lastError);//throw new IndexOutOfRangeException()
+                HandleReadError(bytesRead);
+                this.position += bytesRead;
             }
             else
             {
@@ -119,62 +118,70 @@ namespace GhostYak.IO.RawDiskDrive
                 byte[] tmpBuffer = new byte[newCount];
 
                 Seek(newPos, SeekOrigin.Begin);
-                br = ReadFileNative(_handle, tmpBuffer, 0, newCount, out hr);
-                if (br == -1)
+                bytesRead = ReadFileNative(_handle, tmpBuffer, 0, newCount, out lastError);
+                if (bytesRead == -1)
                 {
-                    switch (hr)
-                    {
-                        case 109:
-                            br = 0;
-                            break;
-                        case 87:
-                            //섹터배수가 아닌 경우 예외 발생함1
-                            throw new ArgumentException("INVALID_PARAMETER");
-                        default:
-                            //섹터배수가 아닌 경우 예외 발생함2...
-                            //<2021-10-09>HDD가 갑자기 Offline이 되어도 발생함.
-                            throw new Win32Exception(hr);
-                    }
+                    HandleReadError(bytesRead);
                 }
                 Array.Copy(tmpBuffer, sourceIdx, buffer, 0, count);
 
-                this.position += br;
+                this.position += bytesRead;
             }
 
-            return br;
+            return bytesRead;
         }
 
-        private unsafe int ReadFileNative(SafeFileHandle handle, byte[] bytes, int offset, int count, out int hr)
+        private void HandleReadError(int lastError)
         {
+            // lastError 109 == ERROR_BROKEN_PIPE
+            // lastError 233 == ERROR_PIPE_NOT_CONNECTED
+
+            switch (lastError)
+            {
+                case 109:
+                    return;
+                case 87:
+                    throw new ArgumentException("INVALID_PARAMETER");
+                default:
+                    throw new Win32Exception(lastError);
+            }
+        }
+
+        private unsafe int ReadFileNative(SafeFileHandle handle, byte[] bytes, int offset, int count, out int lastError)
+        {
+            int numBytesRead = 0;
+            int success;//0 is failure, non-0 is success
+
             if (bytes.Length - offset < count)
             {
                 throw new IndexOutOfRangeException("IndexOutOfRange_IORaceCondition");
             }
             if (bytes.Length == 0)
             {
-                hr = 0;
+                lastError = 0;
                 return 0;
             }
-            int numBytesRead = 0;
-            int num;
+            
             fixed (byte* ptr = bytes)
             {
-                num = Win32Native.ReadFile(handle, ptr + offset, count, out numBytesRead, IntPtr.Zero);
+                success = ReadFile(handle, ptr + offset, count, out numBytesRead, IntPtr.Zero);
             }
-            if (num == 0)
+            if (success == 0)
             {
-                hr = Marshal.GetLastWin32Error();
-                if (hr == 109 || hr == 233)
+                lastError = Marshal.GetLastWin32Error();
+                // lastError == 109 == ERROR_BROKEN_PIPE
+                // lastError == 233 == ERROR_PIPE_NOT_CONNECTED
+                if (lastError == 109 || lastError == 233)
                 {
                     return -1;
                 }
-                if (hr == 6)
+                if (lastError == 6)
                 {
                     _handle.Dispose();
                 }
                 return -1;
             }
-            hr = 0;
+            lastError = 0;
             return numBytesRead;
         }
 

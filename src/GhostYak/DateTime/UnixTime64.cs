@@ -8,6 +8,7 @@ using System.Diagnostics;
 
 namespace GhostYak.DateTime
 {
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class UnixTime64
     {
         private long _seconds;
